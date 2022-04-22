@@ -1,20 +1,25 @@
-FROM alpine:3.14
+FROM alpine:3.15
 MAINTAINER Christoph Wiechert <wio@psitrax.de>
 
-ENV POWERDNS_VERSION=4.5.1 \
+ENV POWERDNS_VERSION=4.6.2 \
     MYSQL_DEFAULT_AUTOCONF=true \
     MYSQL_DEFAULT_HOST="mysql" \
     MYSQL_DEFAULT_PORT="3306" \
     MYSQL_DEFAULT_USER="root" \
     MYSQL_DEFAULT_PASS="root" \
-    MYSQL_DEFAULT_DB="pdns"
+    MYSQL_DEFAULT_DB="pdns" \
+    DEFAULT_ENABLE_LMDB="false"
 
 RUN apk --update --no-cache add \
       bash \
+      boost1.77-program_options \
+      boost1.77-serialization \
       libcurl \
       libgcc \
       libpq \
+      libsodium \
       libstdc++ \
+      lmdb \
       lua5.3-libs \
       mariadb-client \
       mariadb-connector-c \
@@ -25,6 +30,8 @@ RUN apk --update --no-cache add \
       curl-dev \
       file \
       g++ \
+      libsodium-dev \
+      lmdb-dev \
       lua5.3-dev \
       make \
       mariadb-connector-c-dev \
@@ -36,19 +43,19 @@ RUN apk --update --no-cache add \
     tar xjf pdns-${POWERDNS_VERSION}.tar.bz2 && \
     cd /tmp/pdns-${POWERDNS_VERSION} && \
     ./configure --prefix="" --exec-prefix=/usr --sysconfdir=/etc/pdns \
-      --with-modules="bind gmysql gpgsql gsqlite3" && \
-    make && make install-strip && \
+      --with-modules="bind gmysql gpgsql gsqlite3 lmdb" \
+      --with-libsodium \
+      --with-lmdb \
+      --enable-unit-tests && \
+    make -j4 && make install-strip && \
     cd / && \
-    mkdir -p /etc/pdns/conf.d && \
     addgroup -S pdns && \
     adduser -S -D -H -h /var/empty -s /bin/false -G pdns -g pdns pdns && \
-    cp -d /usr/lib/libboost_program_options.so* /tmp && \
     apk del --purge .build-deps && \
-    mv /tmp/libboost_program_options.so* /usr/lib/ && \
-    rm -rf /tmp/pdns-$POWERDNS_VERSION.tar.bz2 /tmp/pdns-$POWERDNS_VERSION /var/cache/apk/*
+    rm -rf /tmp/pdns-$POWERDNS_VERSION.tar.bz2 /tmp/pdns-$POWERDNS_VERSION /var/cache/apk/* && \
+    mkdir -p /var/lib/pdns && chmod 777 /var/lib/pdns
 
-ADD pdns.conf /etc/pdns/
-ADD entrypoint.sh /
+COPY root/ /
 
 EXPOSE 53/tcp 53/udp
 

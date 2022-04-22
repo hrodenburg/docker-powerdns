@@ -35,6 +35,7 @@ docker_setup_env() {
     file_env 'MYSQL_PASS' $MYSQL_DEFAULT_PASS
     file_env 'MYSQL_USER' $MYSQL_DEFAULT_USER
     file_env 'MYSQL_PORT' $MYSQL_DEFAULT_PORT
+    file_env 'ENABLE_LMDB' $DEFAULT_ENABLE_LMDB
 }
 
 docker_setup_env
@@ -46,12 +47,15 @@ docker_setup_env
 
 if $MYSQL_AUTOCONF ; then
   # Set MySQL Credentials in pdns.conf
-  sed -r -i "s/^[# ]*gmysql-host=.*/gmysql-host=${MYSQL_HOST}/g" /etc/pdns/pdns.conf
-  sed -r -i "s/^[# ]*gmysql-port=.*/gmysql-port=${MYSQL_PORT}/g" /etc/pdns/pdns.conf
-  sed -r -i "s/^[# ]*gmysql-user=.*/gmysql-user=${MYSQL_USER}/g" /etc/pdns/pdns.conf
-  sed -r -i "s/^[# ]*gmysql-password=.*/gmysql-password=${MYSQL_PASS}/g" /etc/pdns/pdns.conf
-  sed -r -i "s/^[# ]*gmysql-dbname=.*/gmysql-dbname=${MYSQL_DB}/g" /etc/pdns/pdns.conf
-  sed -r -i "s/^[# ]*gmysql-dnssec=.*/gmysql-dnssec=${MYSQL_DNSSEC}/g" /etc/pdns/pdns.conf
+  sed -r -i "s/^[# ]*gmysql-host=.*/gmysql-host=${MYSQL_HOST}/g" /etc/pdns/pdns-snippets.d/gmysql.conf
+  sed -r -i "s/^[# ]*gmysql-port=.*/gmysql-port=${MYSQL_PORT}/g" /etc/pdns/pdns-snippets.d/gmysql.conf
+  sed -r -i "s/^[# ]*gmysql-user=.*/gmysql-user=${MYSQL_USER}/g" /etc/pdns/pdns-snippets.d/gmysql.conf
+  sed -r -i "s/^[# ]*gmysql-password=.*/gmysql-password=${MYSQL_PASS}/g" /etc/pdns/pdns-snippets.d/gmysql.conf
+  sed -r -i "s/^[# ]*gmysql-dbname=.*/gmysql-dbname=${MYSQL_DB}/g" /etc/pdns/pdns-snippets.d/gmysql.conf
+  sed -r -i "s/^[# ]*gmysql-dnssec=.*/gmysql-dnssec=${MYSQL_DNSSEC}/g" /etc/pdns/pdns-snippets.d/gmysql.conf
+
+  # enable configuration
+  ln -sfn ../pdns-snippets.d/gmysql.conf /etc/pdns/pdns.d/gmysql.conf
 
   MYSQLCMD="mysql --host=${MYSQL_HOST} --user=${MYSQL_USER} --password=${MYSQL_PASS} --port=${MYSQL_PORT} -r -N"
 
@@ -90,6 +94,10 @@ if $MYSQL_AUTOCONF ; then
   fi
 
   unset -v MYSQL_PASS
+fi
+
+if $ENABLE_LMDB; then
+  ln -sfn ../pdns-snippets.d/lmdb.conf /etc/pdns/pdns.d/lmdb.conf
 fi
 
 # Run pdns server
