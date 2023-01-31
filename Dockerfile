@@ -1,7 +1,7 @@
-FROM alpine:3.15
+FROM alpine:3.17
 MAINTAINER Christoph Wiechert <wio@psitrax.de>
 
-ENV POWERDNS_VERSION=4.6.2 \
+ENV POWERDNS_VERSION=4.7.3 \
     MYSQL_DEFAULT_AUTOCONF=true \
     MYSQL_DEFAULT_HOST="mysql" \
     MYSQL_DEFAULT_PORT="3306" \
@@ -12,8 +12,8 @@ ENV POWERDNS_VERSION=4.6.2 \
 
 RUN apk --update --no-cache add \
       bash \
-      boost1.77-program_options \
-      boost1.77-serialization \
+      boost1.80-program_options \
+      boost1.80-serialization \
       libcurl \
       libgcc \
       libpq \
